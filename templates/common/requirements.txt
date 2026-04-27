@@ -1,0 +1,11 @@
+# Core (required)
+rank-bm25>=0.2.2
+PyYAML>=6.0
+
+# PDF extraction (install at least one)
+# pymupdf4llm>=0.0.17    # best: clean markdown output
+# pymupdf>=1.23          # fallback plain text
+
+# HTML extraction (optional, improves quality)
+# beautifulsoup4>=4.12
+# lxml>=4.9
