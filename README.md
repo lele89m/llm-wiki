@@ -217,6 +217,14 @@ pip3 install beautifulsoup4
 
 ---
 
+## Customizing for your domain
+
+The template ships with IT cloud provider and personal wiki types.
+For other domains (legal, medical, research, startup...) see **[CUSTOMIZATION.md](CUSTOMIZATION.md)** —
+step-by-step guide with four complete examples showing what to change in `CLAUDE.md`.
+
+---
+
 ## Sharing with colleagues
 
 This repo is the template. Each colleague runs `bash setup.sh` to create their own wiki.
