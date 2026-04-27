@@ -33,7 +33,7 @@ Creates a fully configured wiki repo — work or personal — then open it with 
 **With Claude Code:**
 ```bash
 cd your-wiki && claude
-# Tell it: "Read CLAUDE.md and run python tools/status.py"
+# Tell it: "Read CLAUDE.md and run python3 tools/status.py"
 ```
 
 **With Ollama (opencode, open-webui, aider):**
@@ -148,7 +148,7 @@ and appends to the log. A single source typically touches 5–15 wiki pages.
 
 **Extract PDF/HTML before ingesting** (needed for Ollama and non-multimodal LLMs):
 ```bash
-python tools/extract.py raw/sources/report.pdf -o /tmp/report.md
+python3 tools/extract.py raw/sources/report.pdf -o /tmp/report.md
 ```
 
 ---
@@ -157,24 +157,24 @@ python tools/extract.py raw/sources/report.pdf -o /tmp/report.md
 
 ```bash
 # Start of session
-python tools/status.py
+python3 tools/status.py
 
 # Search before creating pages (avoid duplicates)
-python tools/search.py "kubernetes networking" --limit 5
+python3 tools/search.py "kubernetes networking" --limit 5
 
 # Scaffold a new page
-python tools/new.py concept "Zero Trust Networking"
-python tools/new.py runbook "Drain a Kubernetes node"
+python3 tools/new.py concept "Zero Trust Networking"
+python3 tools/new.py runbook "Drain a Kubernetes node"
 
 # Health check
-python tools/lint.py
+python3 tools/lint.py
 
 # Review gaps (unanswered user questions)
-python tools/gaps.py
-python tools/gaps.py --priority high
+python3 tools/gaps.py
+python3 tools/gaps.py --priority high
 
 # Extract source file to text
-python tools/extract.py raw/sources/report.pdf -o /tmp/report.md
+python3 tools/extract.py raw/sources/report.pdf -o /tmp/report.md
 ```
 
 ---
@@ -196,14 +196,14 @@ Open `your-wiki/` as a vault. Settings are pre-configured in `.obsidian/app.json
 ## Python dependencies
 
 ```bash
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # PDF support (install one):
-pip install pymupdf4llm    # best: clean markdown output
-pip install pymupdf        # fallback: plain text
+pip3 install pymupdf4llm    # best: clean markdown output
+pip3 install pymupdf        # fallback: plain text
 
 # Better HTML extraction (optional):
-pip install beautifulsoup4
+pip3 install beautifulsoup4
 ```
 
 ---

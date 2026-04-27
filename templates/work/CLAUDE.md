@@ -89,7 +89,7 @@ When the human drops a source in `raw/sources/` and asks you to ingest it:
 
 1. **Extract** — if it's a PDF or HTML, run:
    ```bash
-   python tools/extract.py raw/sources/<filename> -o /tmp/extracted.md
+   python3 tools/extract.py raw/sources/<filename> -o /tmp/extracted.md
    ```
    Then read `/tmp/extracted.md`. For images: read them directly and describe what you see.
 
@@ -98,7 +98,7 @@ When the human drops a source in `raw/sources/` and asks you to ingest it:
 3. **Write source summary** — create `wiki/sources/<slug>.md` using `wiki/_templates/source-summary.md`.
 
 4. **Update entity/concept pages** — for each key entity or concept in the source:
-   - Search index.md or run `python tools/search.py "<term>"` to find existing pages
+   - Search index.md or run `python3 tools/search.py "<term>"` to find existing pages
    - If page exists: update it, note any contradictions with `> ⚠️ Contradicts: [[page]] — reason`
    - If page doesn't exist: create it using the appropriate template
    - Aim for 5–15 page touches per ingest
@@ -118,7 +118,7 @@ When the human drops a source in `raw/sources/` and asks you to ingest it:
 When the maintainer or a developer asks a question:
 
 1. Read `wiki/index.md` to locate relevant pages.
-2. Run `python tools/search.py "<query>" --limit 8` if needed.
+2. Run `python3 tools/search.py "<query>" --limit 8` if needed.
 3. Read the relevant pages.
 4. Synthesize an answer with citations: `([[page-name]])`.
 5. If the answer is a useful analysis, save it as `wiki/analysis/<slug>.md` and add to index.
@@ -131,7 +131,7 @@ When the maintainer or a developer asks a question:
 Used when the agent answers questions on behalf of end users (e.g. support, documentation bot).
 **Conservative mode: never invent, always cite, always state confidence.**
 
-1. Run `python tools/search.py "<question>" --limit 8`.
+1. Run `python3 tools/search.py "<question>" --limit 8`.
 2. Read the top matching pages.
 3. **Assess confidence** using the table below.
 4. Respond according to confidence level.
@@ -168,8 +168,8 @@ Assess coverage **before** answering any user-facing question:
 
 When asked for a health check:
 
-1. Run `python tools/lint.py` and review output.
-2. Run `python tools/gaps.py` and review open gaps — these are questions users couldn't get answered.
+1. Run `python3 tools/lint.py` and review output.
+2. Run `python3 tools/gaps.py` and review open gaps — these are questions users couldn't get answered.
 3. Fix broken internal links.
 4. Create stub pages for concepts mentioned but undocumented.
 5. Add missing cross-references between related pages.
@@ -260,30 +260,30 @@ Generate Python code and offer to run it. Save output to `wiki/_charts/<name>.pn
 
 **At session start — always run this first:**
 ```bash
-python tools/status.py          # pages count, sources count, last operations
+python3 tools/status.py          # pages count, sources count, last operations
 ```
 
 **During work:**
 ```bash
 # Search pages before creating new ones (avoid duplicates)
-python tools/search.py "kubernetes networking" --limit 5
+python3 tools/search.py "kubernetes networking" --limit 5
 
 # Changelog — what changed in the wiki (useful after absence or for team review)
-python tools/diff.py                    # last 7 days
-python tools/diff.py --days 30          # last 30 days
-python tools/diff.py --from 2026-04-01  # from a specific date
+python3 tools/diff.py                    # last 7 days
+python3 tools/diff.py --days 30          # last 30 days
+python3 tools/diff.py --from 2026-04-01  # from a specific date
 
 # Scaffold a new page from template (fills frontmatter automatically)
-python tools/new.py concept "Zero Trust Networking"
-python tools/new.py decision "Use Terraform over Pulumi"
-python tools/new.py runbook "Drain a Kubernetes node"
+python3 tools/new.py concept "Zero Trust Networking"
+python3 tools/new.py decision "Use Terraform over Pulumi"
+python3 tools/new.py runbook "Drain a Kubernetes node"
 
 # Extract PDF or HTML before ingesting
-python tools/extract.py raw/sources/2026-04-27-report.pdf -o /tmp/report.md
-python tools/extract.py raw/sources/2026-04-27-page.html  -o /tmp/page.md
+python3 tools/extract.py raw/sources/2026-04-27-report.pdf -o /tmp/report.md
+python3 tools/extract.py raw/sources/2026-04-27-page.html  -o /tmp/page.md
 
 # Health check
-python tools/lint.py
+python3 tools/lint.py
 ```
 
 **Raw sources naming convention:**

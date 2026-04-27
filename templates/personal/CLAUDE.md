@@ -85,7 +85,7 @@ When the human drops a source in `raw/sources/` and asks you to ingest it:
 
 1. **Extract** — if it's a PDF or HTML, run:
    ```bash
-   python tools/extract.py raw/sources/<filename> -o /tmp/extracted.md
+   python3 tools/extract.py raw/sources/<filename> -o /tmp/extracted.md
    ```
    Then read `/tmp/extracted.md`. For images: read them directly.
 
@@ -94,7 +94,7 @@ When the human drops a source in `raw/sources/` and asks you to ingest it:
 3. **Write source summary** — create `wiki/sources/<slug>.md` using `wiki/_templates/source-summary.md`.
 
 4. **Update related pages** — for each key idea, person, or theme in the source:
-   - Search index.md or run `python tools/search.py "<term>"` to find existing pages
+   - Search index.md or run `python3 tools/search.py "<term>"` to find existing pages
    - If page exists: update it, note evolution or contradiction with `> ↺ Evolved: [[page]] — what changed`
    - If page doesn't exist: create it using the appropriate template
    - Aim for 3–10 page touches per ingest
@@ -114,7 +114,7 @@ When the human drops a source in `raw/sources/` and asks you to ingest it:
 When the human asks a question or wants to explore something:
 
 1. Read `wiki/index.md` to locate relevant pages.
-2. Run `python tools/search.py "<query>" --limit 8` if needed.
+2. Run `python3 tools/search.py "<query>" --limit 8` if needed.
 3. Read the relevant pages.
 4. Synthesize an answer with citations: `([[page-name]])`.
 5. If the answer surfaces a useful pattern or synthesis, save it as `wiki/analysis/<slug>.md` and add to index.
@@ -127,7 +127,7 @@ When the human asks a question or wants to explore something:
 Used when the agent answers questions from third parties using this wiki as the source of truth.
 **Conservative mode: never invent, always cite, always state confidence.**
 
-1. Run `python tools/search.py "<question>" --limit 8`.
+1. Run `python3 tools/search.py "<question>" --limit 8`.
 2. Read the top matching pages.
 3. **Assess confidence** using the table below.
 4. Respond according to confidence level.
@@ -162,8 +162,8 @@ Used when the agent answers questions from third parties using this wiki as the 
 
 When asked for a health check:
 
-1. Run `python tools/lint.py` and review output.
-2. Run `python tools/gaps.py` — review open gaps (questions with no good answer).
+1. Run `python3 tools/lint.py` and review output.
+2. Run `python3 tools/gaps.py` — review open gaps (questions with no good answer).
 3. Fix broken internal links.
 4. Create stub pages for concepts mentioned but undocumented.
 5. Add missing cross-references.
@@ -244,24 +244,24 @@ Generate Python code and offer to run it. Save output to `wiki/_charts/<name>.pn
 
 **At session start — always run this first:**
 ```bash
-python tools/status.py          # pages count, sources count, last operations
+python3 tools/status.py          # pages count, sources count, last operations
 ```
 
 **During work:**
 ```bash
 # Search pages before creating new ones (avoid duplicates)
-python tools/search.py "deep work focus" --limit 5
+python3 tools/search.py "deep work focus" --limit 5
 
 # Scaffold a new page from template (fills frontmatter automatically)
-python tools/new.py concept "Deep Work"
-python tools/new.py entity "Atomic Habits (book)"
+python3 tools/new.py concept "Deep Work"
+python3 tools/new.py entity "Atomic Habits (book)"
 
 # Extract PDF or HTML before ingesting
-python tools/extract.py raw/sources/2026-04-27-book.pdf     -o /tmp/book.md
-python tools/extract.py raw/sources/2026-04-27-article.html -o /tmp/article.md
+python3 tools/extract.py raw/sources/2026-04-27-book.pdf     -o /tmp/book.md
+python3 tools/extract.py raw/sources/2026-04-27-article.html -o /tmp/article.md
 
 # Health check
-python tools/lint.py
+python3 tools/lint.py
 ```
 
 **Raw sources naming convention:**
