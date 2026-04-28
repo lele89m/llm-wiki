@@ -26,7 +26,7 @@ raw/
   assets/       ← images (never modify)
   sources/      ← source documents (never modify)
 tools/
-  chat.py       ← Ollama agent wrapper (full file access via <read>/<run> tags)
+  chat.py       ← Ollama agent wrapper (read/run/write access via action tags)
   status.py     ← session dashboard (run at start)
   search.py     ← full-text BM25 search
   lint.py       ← health check + valid_until expiry
@@ -260,9 +260,21 @@ python3 tools/new.py entity "Atomic Habits (book)"
 python3 tools/extract.py raw/sources/2026-04-27-book.pdf     -o /tmp/book.md
 python3 tools/extract.py raw/sources/2026-04-27-article.html -o /tmp/article.md
 
+# Changelog — what changed in the wiki
+python3 tools/diff.py                    # last 7 days
+python3 tools/diff.py --days 30          # last 30 days
+
 # Health check
 python3 tools/lint.py
 ```
+
+**Ollama agent:**
+```bash
+python3 tools/chat.py                          # default model (qwen2.5:7b)
+python3 tools/chat.py --model qwen2.5-coder:7b
+```
+The agent can read files, run tools, and write pages inside `wiki/` via `<read>`, `<run>`, `<write>` tags.
+See [OLLAMA.md](../OLLAMA.md) for setup and model recommendations.
 
 **Raw sources naming:**
 Any filename works. A date prefix is optional but helps with chronological sorting:

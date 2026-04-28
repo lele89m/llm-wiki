@@ -181,6 +181,11 @@ python3 tools/lint.py
 python3 tools/gaps.py
 python3 tools/gaps.py --priority high
 
+# Changelog — what changed in the wiki
+python3 tools/diff.py                    # last 7 days
+python3 tools/diff.py --days 30          # last 30 days
+python3 tools/diff.py --from 2026-04-01  # from a specific date
+
 # Extract source file to text
 python3 tools/extract.py raw/sources/report.pdf -o /tmp/report.md
 ```
