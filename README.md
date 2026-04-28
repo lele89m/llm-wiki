@@ -36,10 +36,12 @@ cd your-wiki && claude
 # Tell it: "Read CLAUDE.md and run python3 tools/status.py"
 ```
 
-**With Ollama (opencode, open-webui, aider):**
+**With Ollama:**
 ```bash
-# Open your-wiki/ as context. Load CLAUDE.md as the system prompt.
+cd your-wiki
+python3 tools/chat.py --model qwen2.5-coder:7b
 ```
+Full agent with file read/write and tool execution. See **[OLLAMA.md](OLLAMA.md)** for setup, model recommendations, and frontend alternatives.
 
 ---
 
