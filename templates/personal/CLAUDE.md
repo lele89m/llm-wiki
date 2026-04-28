@@ -264,10 +264,9 @@ python3 tools/extract.py raw/sources/2026-04-27-article.html -o /tmp/article.md
 python3 tools/lint.py
 ```
 
-**Raw sources naming convention:**
-Name files with a date prefix so they sort chronologically:
+**Raw sources naming:**
+Any filename works. A date prefix is optional but helps with chronological sorting:
 ```
-raw/sources/YYYY-MM-DD-title.md
-raw/sources/YYYY-MM-DD-title.pdf
-raw/sources/YYYY-MM-DD-title.html
+raw/sources/deep-work-notes.md              ← fine
+raw/sources/2026-04-27-deep-work-notes.md   ← preferred
 ```

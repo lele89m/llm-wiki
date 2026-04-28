@@ -133,15 +133,21 @@ Unanswered questions accumulate in `wiki/gaps.md` and drive future ingestion pri
 
 ## Source ingestion
 
-Drop files in `raw/sources/` with a date prefix:
+Drop any file in `raw/sources/` — the name can be anything:
 
 ```
-raw/sources/YYYY-MM-DD-title.md
-raw/sources/YYYY-MM-DD-report.pdf
-raw/sources/YYYY-MM-DD-page.html
+raw/sources/architecture-overview.md
+raw/sources/report.pdf
+raw/sources/meeting-notes.html
 ```
 
-Tell the LLM: `"Ingest raw/sources/2026-04-27-architecture-overview.md"`
+A date prefix is optional but recommended for chronological sorting:
+
+```
+raw/sources/2026-04-27-architecture-overview.md
+```
+
+Tell the LLM: `"Ingest raw/sources/architecture-overview.md"`
 
 The LLM extracts key information, writes a source summary, updates related wiki pages,
 and appends to the log. A single source typically touches 5–15 wiki pages.
