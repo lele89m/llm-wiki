@@ -83,7 +83,19 @@ def resolve(link, source_key, all_keys):
     return None
 
 
-EXEMPT = {"index", "log", "overview"}
+EXEMPT = {"index", "log", "overview", "gaps"}
+
+# Link targets that are intentional placeholders in templates/index scaffolds.
+_PLACEHOLDER_SEGMENTS = {"slug", "page-slug", "filename", "source-name", "category"}
+_PLACEHOLDER_PATHS = {"sources/slug", "category/page-slug", "raw/sources/filename"}
+
+
+def _is_placeholder(link):
+    norm = link.strip().lower().rstrip("/")
+    if norm in _PLACEHOLDER_PATHS:
+        return True
+    last = norm.split("/")[-1]
+    return last in _PLACEHOLDER_SEGMENTS
 
 
 def lint(wiki_dir):
@@ -112,12 +124,22 @@ def lint(wiki_dir):
     print(f"Pages: {len(pages)}")
     print("─" * 60)
 
-    no_meta = [p for k, p in pages.items() if not p["meta"] and not k.startswith("_")]
+    no_meta = [
+        p for k, p in pages.items()
+        if not p["meta"]
+        and not k.startswith("_")
+        and k.split("/")[-1] not in EXEMPT
+    ]
     section("⚠️  Missing frontmatter", no_meta, lambda p: p["rel"])
 
     broken = []
     for key, page in pages.items():
+        # skip template directories — links inside are intentional placeholders
+        if key.startswith("_templates/") or key.startswith("_templater/"):
+            continue
         for lnk in page["outlinks"]:
+            if _is_placeholder(lnk):
+                continue
             if not resolve(lnk, key, all_keys):
                 broken.append((page["rel"], lnk))
     section("🔗 Broken links", broken, lambda x: f"{x[0]} → [[{x[1]}]]")
