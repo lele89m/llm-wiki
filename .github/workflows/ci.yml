@@ -1,0 +1,94 @@
+name: CI
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+    branches: ["**"]
+
+jobs:
+  lint-shell:
+    name: Shell lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck
+        run: sudo apt-get install -y shellcheck
+      - name: Check setup.sh
+        run: shellcheck setup.sh
+
+  lint-python:
+    name: Python syntax
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile all tools
+        run: |
+          for f in templates/common/tools/*.py; do
+            python3 -m py_compile "$f" && echo "OK  $f" || exit 1
+          done
+
+  functional:
+    name: Functional test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install dependencies
+        run: pip install rank-bm25 PyYAML
+      - name: Run setup.sh non-interactively (work wiki)
+        run: echo -e "1\ntest-wiki\nN" | bash setup.sh
+      - name: Verify expected structure
+        run: |
+          dirs=(
+            test-wiki/wiki/architecture
+            test-wiki/wiki/services
+            test-wiki/wiki/technologies
+            test-wiki/wiki/infrastructure
+            test-wiki/wiki/sources
+            test-wiki/wiki/analysis
+            test-wiki/wiki/_templates
+            test-wiki/raw/sources
+            test-wiki/raw/assets
+            test-wiki/tools
+          )
+          for d in "${dirs[@]}"; do
+            [ -d "$d" ] && echo "OK  $d" || { echo "MISSING $d"; exit 1; }
+          done
+          files=(
+            test-wiki/CLAUDE.md
+            test-wiki/wiki/index.md
+            test-wiki/wiki/log.md
+            test-wiki/wiki/overview.md
+            test-wiki/wiki/gaps.md
+            test-wiki/tools/status.py
+            test-wiki/tools/search.py
+            test-wiki/tools/lint.py
+            test-wiki/tools/new.py
+          )
+          for f in "${files[@]}"; do
+            [ -f "$f" ] && echo "OK  $f" || { echo "MISSING $f"; exit 1; }
+          done
+      - name: Run status.py
+        run: python3 tools/status.py
+        working-directory: test-wiki
+      - name: Run lint.py
+        run: python3 tools/lint.py
+        working-directory: test-wiki
+      - name: Run search.py
+        run: python3 tools/search.py "kubernetes" --limit 3
+        working-directory: test-wiki
+      - name: Scaffold a concept page
+        run: python3 tools/new.py concept "Zero Trust Networking"
+        working-directory: test-wiki
+      - name: Verify scaffolded page has frontmatter
+        run: |
+          page=$(find wiki -name "zero-trust-networking.md" | head -1)
+          [ -n "$page" ] || { echo "scaffolded page not found"; exit 1; }
+          grep -q "^title:" "$page" && echo "frontmatter OK"
+        working-directory: test-wiki
