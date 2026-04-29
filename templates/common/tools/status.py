@@ -40,6 +40,9 @@ def last_log_entries(wiki_dir, n=5):
     return re.findall(r'^## (\[.+)', text, re.MULTILINE)[-n:]
 
 
+_DATE_RE = re.compile(r'^\d{4}-\d{2}-\d{2}$')
+
+
 def last_updated(wiki_dir):
     dates = []
     for p in wiki_dir.rglob("*.md"):
@@ -48,7 +51,9 @@ def last_updated(wiki_dir):
         text = p.read_text(encoding="utf-8")
         m = re.search(r'^updated:\s*(.+)', text, re.MULTILINE)
         if m:
-            dates.append(m.group(1).strip())
+            val = m.group(1).strip().strip('"').strip("'")
+            if _DATE_RE.match(val):
+                dates.append(val)
     return max(dates) if dates else "—"
 
 
