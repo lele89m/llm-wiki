@@ -116,11 +116,59 @@ When the user asks a technical question or describes a problem, **ALWAYS follow 
 
 # ── colors ──────────────────────────────────────────────────────────────────────
 
-if sys.stdout.isatty():
+IS_TTY = sys.stdout.isatty()
+
+if IS_TTY:
     BOLD="\033[1m"; DIM="\033[2m"; NC="\033[0m"
     GREEN="\033[0;32m"; BLUE="\033[0;34m"; RED="\033[0;31m"
+    CYAN="\033[0;36m"; YELLOW="\033[0;33m"
 else:
-    BOLD=DIM=NC=GREEN=BLUE=RED=""
+    BOLD=DIM=NC=GREEN=BLUE=RED=CYAN=YELLOW=""
+
+
+# ── markdown → ANSI renderer ────────────────────────────────────────────────────
+
+def render_ansi(text):
+    """Convert basic markdown to ANSI terminal formatting."""
+    lines = []
+    in_code = False
+    for line in text.splitlines():
+        # code fences
+        if line.startswith("```"):
+            if not in_code:
+                lang = line[3:].strip()
+                label = f" {lang}" if lang else ""
+                lines.append(f"{DIM}┄┄┄{label}{'┄' * max(0, 37 - len(label))}{NC}")
+            else:
+                lines.append(f"{DIM}{'┄' * 40}{NC}")
+            in_code = not in_code
+            continue
+        if in_code:
+            lines.append(f"  {DIM}{line}{NC}")
+            continue
+        # headings
+        if line.startswith("#### "):
+            lines.append(f"{BOLD}{line[5:]}{NC}")
+        elif line.startswith("### "):
+            lines.append(f"\n{BOLD}{line[4:]}{NC}")
+        elif line.startswith("## "):
+            lines.append(f"\n{BOLD}{CYAN}{line[3:]}{NC}")
+        elif line.startswith("# "):
+            lines.append(f"\n{BOLD}{CYAN}{line[2:]}{NC}\n{CYAN}{'─' * 50}{NC}")
+        elif line.startswith("---") and line.strip("- ") == "":
+            lines.append(f"{DIM}{'─' * 50}{NC}")
+        else:
+            # inline bold **text** and __text__
+            line = re.sub(r'\*\*(.+?)\*\*', f'{BOLD}\\1{NC}', line)
+            line = re.sub(r'__(.+?)__',     f'{BOLD}\\1{NC}', line)
+            # inline italic *text*
+            line = re.sub(r'\*(.+?)\*',     f'{DIM}\\1{NC}',  line)
+            # inline code `text`
+            line = re.sub(r'`([^`]+)`',     f'{YELLOW}\\1{NC}', line)
+            # wiki links [[page]]
+            line = re.sub(r'\[\[([^\]]+)\]\]', f'{CYAN}[[\\1]]{NC}', line)
+            lines.append(line)
+    return "\n".join(lines)
 
 # ── helpers ─────────────────────────────────────────────────────────────────────
 
@@ -268,7 +316,7 @@ def process_actions(text, root):
 
 # ── ollama api ──────────────────────────────────────────────────────────────────
 
-def ollama_chat(messages, model, api_url):
+def ollama_chat(messages, model, api_url, pretty=False):
     payload = json.dumps({"model": model, "messages": messages, "stream": True}).encode()
     req = urllib_request.Request(
         api_url, data=payload, headers={"Content-Type": "application/json"}
@@ -282,7 +330,8 @@ def ollama_chat(messages, model, api_url):
                 chunk = json.loads(line)
                 token = chunk.get("message", {}).get("content", "")
                 if token:
-                    print(token, end="", flush=True)
+                    if not pretty:
+                        print(token, end="", flush=True)
                     full += token
                 if chunk.get("done"):
                     break
@@ -290,7 +339,11 @@ def ollama_chat(messages, model, api_url):
         print(f"\n{RED}Error: cannot reach Ollama at {api_url}{NC}")
         print("Run: ollama serve")
         sys.exit(1)
-    print()
+
+    if pretty:
+        print(render_ansi(full))
+    else:
+        print()
     return full
 
 
@@ -302,16 +355,16 @@ def trim_history(messages, system_msg, max_pairs):
     return [system_msg] + non_system
 
 
-def agent_turn(messages, model, api_url, root):
+def agent_turn(messages, model, api_url, root, pretty=False):
     """One full agent turn: respond + resolve all action tags in a loop."""
-    response = ollama_chat(messages, model, api_url)
+    response = ollama_chat(messages, model, api_url, pretty=pretty)
     messages.append({"role": "assistant", "content": response})
 
     action_results = process_actions(response, root)
     while action_results:
         messages.append({"role": "user", "content": "\n\n---\n\n".join(action_results)})
         print(f"\n{BLUE}Agent:{NC} ", end="", flush=True)
-        response = ollama_chat(messages, model, api_url)
+        response = ollama_chat(messages, model, api_url, pretty=pretty)
         messages.append({"role": "assistant", "content": response})
         action_results = process_actions(response, root)
 
@@ -325,7 +378,12 @@ def main():
     ap.add_argument("--url",         default=OLLAMA_API)
     ap.add_argument("--ctx", type=int, default=MAX_HISTORY,
                     help="Max conversation pairs in history")
+    ap.add_argument("--pretty", action="store_true",  default=IS_TTY,
+                    help="Render markdown as ANSI (default: on in terminal)")
+    ap.add_argument("--raw",    action="store_true",  default=False,
+                    help="Stream raw markdown, no ANSI rendering")
     args = ap.parse_args()
+    pretty = args.pretty and not args.raw
 
     try:
         root = find_root()
@@ -342,7 +400,8 @@ def main():
     }
 
     print(f"\n{BOLD}Wiki agent{NC}  {DIM}{root.name}{NC}")
-    print(f"{DIM}Model: {args.model}   Python: {PYTHON}{NC}")
+    mode = "pretty" if pretty else "raw"
+    print(f"{DIM}Model: {args.model}   Python: {PYTHON}   Output: {mode}{NC}")
     print(f"{DIM}Loading context...{NC}\n")
 
     # initial context: status + index + recent log + open gaps
@@ -381,7 +440,7 @@ def main():
 
     print(f"{BOLD}{'─' * 60}{NC}")
     print(f"{BLUE}Agent:{NC} ", end="", flush=True)
-    messages = agent_turn(messages, args.model, args.url, root)
+    messages = agent_turn(messages, args.model, args.url, root, pretty=pretty)
 
     print(f"\n{DIM}Commands: /exit  /status  /history{NC}")
 
@@ -410,7 +469,7 @@ def main():
         messages = trim_history(messages, system_msg, args.ctx)
         messages.append({"role": "user", "content": user_input})
         print(f"\n{BLUE}Agent:{NC} ", end="", flush=True)
-        messages = agent_turn(messages, args.model, args.url, root)
+        messages = agent_turn(messages, args.model, args.url, root, pretty=pretty)
 
 
 if __name__ == "__main__":
