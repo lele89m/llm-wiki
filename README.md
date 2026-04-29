@@ -1,3 +1,5 @@
+[![CI](https://github.com/lele89m/llm-wiki/actions/workflows/ci.yml/badge.svg)](https://github.com/lele89m/llm-wiki/actions/workflows/ci.yml)
+
 # llm-wiki
 
 A template for building AI-maintained knowledge bases.
@@ -56,15 +58,18 @@ your-wiki/
 │   ├── log.md         # Append-only operation log
 │   ├── overview.md    # High-level synthesis
 │   ├── gaps.md        # Questions the agent couldn't answer (auto-maintained)
-│   └── _templates/    # Page scaffolds (entity, concept, decision, runbook...)
+│   ├── _templates/    # Page scaffolds for new.py (entity, concept, decision, runbook...)
+│   └── _templater/    # Same templates with Obsidian Templater syntax (tp.date.now etc.)
 ├── raw/
 │   ├── assets/        # Images — set as Obsidian attachment folder
 │   └── sources/       # Your source documents (PDF, MD, HTML) — immutable
 └── tools/
+    ├── chat.py        # Ollama agent wrapper — full read/run/write access
     ├── status.py      # Session dashboard — run at start of every session
-    ├── search.py      # BM25 full-text search over wiki pages
+    ├── search.py      # BM25 full-text search (keyword fallback if rank-bm25 missing)
     ├── lint.py        # Health check: orphans, broken links, expiry dates
     ├── gaps.py        # Show unanswered user questions by priority
+    ├── diff.py        # Changelog — wiki pages changed between two dates
     ├── new.py         # Scaffold a new page from template
     └── extract.py     # Convert PDF/HTML to markdown for ingestion
 ```
@@ -76,10 +81,10 @@ your-wiki/
 | LLM / Tool | How to use |
 |------------|------------|
 | **Claude Code** | `cd your-wiki && claude` — reads `CLAUDE.md` automatically |
-| **Ollama** | Load `CLAUDE.md` as system prompt in your frontend |
-| **OpenAI Codex** | Uses `AGENTS.md` (identical content) |
-| **Aider** | `aider --read CLAUDE.md` inside the wiki directory |
-| **Open WebUI** | Add wiki directory as knowledge, paste `CLAUDE.md` as system prompt |
+| **Ollama** | `python3 tools/chat.py` — built-in agent with full tool access |
+| **OpenAI Codex** | Uses `AGENTS.md` (identical content to `CLAUDE.md`) |
+| **Aider** | `aider --model ollama/qwen2.5:7b --read AGENTS.md` |
+| **Open WebUI** | Load `AGENTS.md` as system prompt; use `--raw` flag with `chat.py` for piped output |
 
 The schema files are plain markdown — any capable LLM can follow them.
 
@@ -168,6 +173,7 @@ python3 tools/extract.py raw/sources/report.pdf -o /tmp/report.md
 python3 tools/status.py
 
 # Search before creating pages (avoid duplicates)
+# Uses BM25 ranking; falls back to keyword search if rank-bm25 is not installed
 python3 tools/search.py "kubernetes networking" --limit 5
 
 # Scaffold a new page
@@ -188,6 +194,11 @@ python3 tools/diff.py --from 2026-04-01  # from a specific date
 
 # Extract source file to text
 python3 tools/extract.py raw/sources/report.pdf -o /tmp/report.md
+
+# Ollama agent
+python3 tools/chat.py                          # default model (qwen2.5:7b), ANSI output
+python3 tools/chat.py --model qwen2.5-coder:7b
+python3 tools/chat.py --raw                    # raw markdown (for piping or open-webui)
 ```
 
 ---
@@ -201,6 +212,7 @@ Open `your-wiki/` as a vault. Settings are pre-configured in `.obsidian/app.json
 
 **Recommended plugins:**
 - **Dataview** — live queries over page frontmatter (tables, lists, counts)
+- **Templater** — create pages from templates with auto date/title (pre-configured, points to `wiki/_templater/`)
 - **Marp Slides** — render slide decks from wiki pages
 - **Obsidian Web Clipper** (browser extension) — clip web articles as markdown to `raw/sources/`
 
@@ -218,6 +230,9 @@ pip3 install pymupdf        # fallback: plain text
 # Better HTML extraction (optional):
 pip3 install beautifulsoup4
 ```
+
+`search.py` works without `rank-bm25` (falls back to keyword frequency search),
+but BM25 gives significantly better ranking. Install it for best results.
 
 ---
 
