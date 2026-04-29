@@ -81,6 +81,17 @@ status: draft
 
 ---
 
+## Answering questions
+
+When the user asks a technical question or describes a problem, **ALWAYS follow this order — no exceptions**:
+
+1. Run `python tools/search.py "<topic>" --limit 5`
+2. Read the top 2-3 matching pages with `<read>`
+3. Answer using only what the wiki contains, citing pages as `([[page-name]])`
+4. If no relevant pages found: say "I have no documentation on this yet" — **do NOT answer from general knowledge**
+
+---
+
 ## Handling ambiguous commands
 
 **"ingest"** (no file specified) — do not ask for clarification. Instead:
