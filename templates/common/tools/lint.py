@@ -26,16 +26,20 @@ def find_wiki_dir():
 def parse_frontmatter(content):
     if not content.startswith("---"):
         return {}, content
-    parts = content.split("---", 2)
-    if len(parts) < 3:
+    # Match closing --- only on its own line to avoid splitting on --- inside values
+    # (e.g. filenames like "My-File---With-Dashes.html")
+    m = re.search(r'(?m)^---\s*$', content[3:])
+    if not m:
         return {}, content
+    fm_text = content[3:3 + m.start()]
+    body    = content[3 + m.end():]
     meta = {}
     if _HAS_YAML:
         try:
-            meta = yaml.safe_load(parts[1]) or {}
+            meta = yaml.safe_load(fm_text) or {}
         except Exception:
             pass
-    return meta, parts[2]
+    return meta, body
 
 
 def wikilinks(text):
