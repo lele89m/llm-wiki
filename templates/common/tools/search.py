@@ -8,9 +8,9 @@ from pathlib import Path
 
 try:
     from rank_bm25 import BM25Okapi
+    _HAS_BM25 = True
 except ImportError:
-    print("Error: rank-bm25 not installed. Run: pip install rank-bm25")
-    sys.exit(1)
+    _HAS_BM25 = False
 
 try:
     import yaml
@@ -30,16 +30,18 @@ def find_wiki_dir():
 def parse_frontmatter(content):
     if not content.startswith("---"):
         return {}, content
-    parts = content.split("---", 2)
-    if len(parts) < 3:
+    m = re.search(r'(?m)^---\s*$', content[3:])
+    if not m:
         return {}, content
+    fm_text = content[3:3 + m.start()]
+    body    = content[3 + m.end():]
     meta = {}
     if _HAS_YAML:
         try:
-            meta = yaml.safe_load(parts[1]) or {}
+            meta = yaml.safe_load(fm_text) or {}
         except Exception:
             pass
-    return meta, parts[2]
+    return meta, body
 
 
 def tokenize(text):
@@ -92,15 +94,30 @@ def run(query, wiki_dir, limit):
         return
 
     terms = tokenize(query)
-    bm25 = BM25Okapi([p["tokens"] for p in pages])
-    scores = bm25.get_scores(terms)
-    ranked = [(s, p) for s, p in sorted(zip(scores, pages), key=lambda x: -x[0]) if s > 0][:limit]
+
+    if _HAS_BM25:
+        bm25   = BM25Okapi([p["tokens"] for p in pages])
+        scores = bm25.get_scores(terms)
+        ranked = [
+            (s, p) for s, p in sorted(zip(scores, pages), key=lambda x: -x[0])
+            if s > 0
+        ][:limit]
+        engine = "BM25"
+    else:
+        # Fallback: count how many query terms appear in each page
+        def keyword_score(page):
+            combined = " ".join(page["tokens"])
+            return sum(combined.count(t) for t in terms)
+
+        scored = [(keyword_score(p), p) for p in pages]
+        ranked = [(s, p) for s, p in sorted(scored, key=lambda x: -x[0]) if s > 0][:limit]
+        engine = "keyword (install rank-bm25 for better results)"
 
     if not ranked:
         print(f'No results for "{query}"')
         return
 
-    print(f'\nResults for "{query}"\n{"─" * 60}')
+    print(f'\nResults for "{query}"  [{engine}]\n{"─" * 60}')
     for i, (score, page) in enumerate(ranked, 1):
         status = page["meta"].get("status", "")
         tag = f"  [{status}]" if status and status != "stable" else ""
