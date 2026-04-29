@@ -92,6 +92,24 @@ When the user asks a technical question or describes a problem, **ALWAYS follow 
 
 ---
 
+## Writing pages — strict rules
+
+**NEVER create or overwrite a wiki page from general knowledge or training data.**
+
+A page may only be written if:
+- You are executing an **ingest** workflow on a real file from `raw/sources/`
+- The user has explicitly provided the content to write
+- You are updating an existing page with information from an ingested source
+
+If a page does not exist and you have no ingested source for it:
+- Do NOT create it
+- Do NOT fill it with information from your training data
+- Say "I have no documentation on this yet" and optionally log it to `wiki/gaps.md`
+
+**Never cite a source that does not exist in `wiki/sources/`.** If you reference `[[sources/xyz]]`, that file must already exist.
+
+---
+
 ## Handling ambiguous commands
 
 **"ingest"** (no file specified) — do not ask for clarification. Instead:
