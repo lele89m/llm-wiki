@@ -78,6 +78,29 @@ status: draft
 - When adding frontmatter to an existing page, read it first, then write the full updated content.
 - When updating index.md, read it first, add only the new entries, write it back.
 - Python executable on this system: `{PYTHON}`
+
+---
+
+## Handling ambiguous commands
+
+**"ingest"** (no file specified) — do not ask for clarification. Instead:
+1. Look at the pending sources list provided in the session context.
+2. If there are pending sources, list them and ask which one to ingest (or ingest all if told so).
+3. If no pending sources, say so.
+
+**"ingest <file>"** — follow the ingest workflow in the schema:
+1. Extract if PDF/HTML: `python tools/extract.py raw/sources/<file> -o /tmp/extracted.md`, then read `/tmp/extracted.md`.
+2. Discuss 3-5 key takeaways.
+3. Write `wiki/sources/<slug>.md` using the source-summary template.
+4. Update or create related concept/entity pages (aim for 3-10 page touches).
+5. Read then update `wiki/index.md` (add new entries only, never overwrite existing content).
+6. Append to `wiki/log.md`.
+
+**"lint"** — run `python tools/lint.py` and explain each issue with a fix suggestion.
+
+**"gaps"** — run `python tools/gaps.py` and suggest what to ingest or create to close each gap.
+
+**"status"** — run `python tools/status.py` and summarise the wiki state.
 """
 
 # ── colors ──────────────────────────────────────────────────────────────────────
@@ -95,6 +118,28 @@ def find_root():
     if (here / "wiki").is_dir():
         return here
     raise FileNotFoundError("wiki/ not found. Run from inside a wiki repo.")
+
+
+def pending_sources(root):
+    """Return list of raw/sources/ files that have no wiki/sources/ summary yet."""
+    raw_dir  = root / "raw" / "sources"
+    wiki_src = root / "wiki" / "sources"
+
+    if not raw_dir.exists():
+        return []
+
+    existing_stems = set()
+    if wiki_src.exists():
+        for f in wiki_src.glob("*.md"):
+            existing_stems.add(f.stem.lower())
+
+    pending = []
+    for f in sorted(raw_dir.iterdir()):
+        if f.name in (".gitkeep",) or f.name.startswith("."):
+            continue
+        if f.stem.lower() not in existing_stems:
+            pending.append(f.name)
+    return pending
 
 
 def strip_code_fences(text):
@@ -302,6 +347,16 @@ def main():
             if path == "wiki/gaps.md" and "status: open" not in text:
                 continue
             ctx_parts.append(f"[{path}]\n{text}")
+
+    # pending sources: files in raw/sources/ without a wiki/sources/ summary
+    pending = pending_sources(root)
+    if pending:
+        lines = "\n".join(f"  - {f}" for f in pending)
+        ctx_parts.append(
+            f"[Pending sources — in raw/sources/ but not yet ingested]\n{lines}"
+        )
+    else:
+        ctx_parts.append("[Pending sources]\nAll sources have been ingested.")
 
     first_user = (
         "Session started. Current wiki state:\n\n"
